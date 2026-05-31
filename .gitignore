@@ -1,0 +1,17 @@
+node_modules/
+dist/
+build/
+.turbo/
+.vite/
+.env
+.env.local
+.env.*.local
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+.venv/
+venv/
+*.pyc
+*.egg-info/
+*.tsbuildinfo
+.DS_Store

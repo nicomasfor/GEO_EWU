@@ -1,0 +1,1035 @@
+NOTA PARA EL AGENTE:
+No intentes construir todas las fases de golpe. Este archivo es la hoja de ruta completa. Cuando el usuario te diga "implementa fase X", trabaja solo esa fase salvo que sea imprescindible tocar algo anterior. Si detectas deuda técnica, propón una mini-fase de refactor antes de seguir.
+
+PROMPT MAESTRO — GEO BUSINESS INTELLIGENCE ENGINE
+
+Quiero que construyas una aplicación web avanzada para descubrimiento masivo de negocios por zona y sector. La primera versión estará orientada únicamente a hostelería y obtendrá datos exclusivamente desde OpenStreetMap, pero la arquitectura debe quedar preparada para añadir más fuentes en el futuro.
+
+El proyecto debe construirse como un monorepo desplegable en Coolify mediante Docker Compose. La base de datos principal será Convex. El backend auxiliar puede ser Python, preferiblemente FastAPI, para ejecutar tareas pesadas de búsqueda, normalización, enriquecimiento, jobs y comunicación con fuentes externas. El frontend debe tener una experiencia visual muy potente, en modo oscuro por defecto, con estética de herramienta avanzada tipo inteligencia geoespacial, inspirada en sistemas modernos de análisis de datos para entidades de poder, sin copiar marcas ni diseños concretos.
+
+IMPORTANTE:
+- Trabaja fase por fase.
+- No avances a la siguiente fase sin dejar la anterior funcionando.
+- Al terminar cada fase, escribe un resumen de lo implementado, archivos tocados, cómo probarlo y qué queda pendiente.
+- Prioriza código limpio, mantenible y escalable.
+- Evita soluciones rápidas difíciles de mantener.
+- Crea documentación mínima en cada fase.
+- Usa nombres claros y consistentes.
+- Si hay ambigüedad técnica, toma una decisión razonable y explícala antes de implementarla.
+- No uses Google Maps ni scraping de Google en esta primera versión.
+- La única fuente inicial de datos será OpenStreetMap mediante Overpass API o una capa equivalente basada en OSM.
+- La app debe estar preparada para añadir fuentes futuras como Foursquare, Yelp, directorios oficiales, webs públicas, datasets abiertos o conectores privados.
+
+============================================================
+OBJETIVO GENERAL DEL PRODUCTO
+============================================================
+
+Construir una plataforma llamada provisionalmente:
+
+GeoSector Intelligence
+
+La plataforma permite:
+1. Buscar una ubicación por ciudad, país o dirección.
+2. Visualizar un globo terráqueo 3D interactivo.
+3. Cambiar entre modo "ciudades" y modo "países".
+4. Seleccionar una ubicación desde el buscador o desde el globo.
+5. Elegir un sector de negocio.
+6. Para esta versión, el único sector disponible será "Hostelería".
+7. Lanzar una búsqueda geoespacial.
+8. Obtener negocios de hostelería desde OpenStreetMap.
+9. Guardar los negocios en Convex en tiempo real.
+10. Mostrar el progreso del job.
+11. Pintar los negocios encontrados en el mapa/globo.
+12. Mostrar una tabla/panel lateral con resultados.
+13. Mostrar ficha detallada de cada negocio.
+14. Preparar la arquitectura para normalización, deduplicación, scoring, trazabilidad de fuentes y futuras integraciones.
+
+============================================================
+STACK TÉCNICO PREFERIDO
+============================================================
+
+Monorepo:
+- pnpm workspace o npm workspace.
+- Estructura clara y preparada para crecer.
+
+Frontend:
+- React + Vite o Next.js.
+- TypeScript obligatorio.
+- TailwindCSS.
+- shadcn/ui o componentes propios equivalentes.
+- Framer Motion para microinteracciones.
+- Three.js / React Three Fiber / react-globe.gl / CesiumJS, elegir la opción más estable para implementar un globo 3D atractivo.
+- Estado cliente simple con Zustand o similar si hace falta.
+- Integración con Convex para datos en tiempo real.
+
+Backend:
+- Python 3.12.
+- FastAPI.
+- httpx para llamadas HTTP.
+- Pydantic para validación.
+- Workers internos simples al principio.
+- Arquitectura preparada para colas en el futuro.
+- Endpoints para lanzar jobs de búsqueda, consultar progreso y ejecutar conectores.
+- Comunicación con Convex para guardar resultados.
+
+Base de datos:
+- Convex como base principal.
+- Schema bien diseñado.
+- Tablas/colecciones para negocios, fuentes, jobs, ubicaciones, sectores, ejecuciones y logs.
+
+Infraestructura:
+- docker-compose.yml en raíz.
+- Dockerfile para frontend.
+- Dockerfile para backend Python.
+- Servicio Convex self-hosted o configuración compatible con Convex externo.
+- .env.example.
+- README.md con instrucciones de local y Coolify.
+- Configuración pensada para Coolify.
+
+============================================================
+DISEÑO VISUAL
+============================================================
+
+La aplicación debe parecer una herramienta avanzada de inteligencia geoespacial.
+
+Estilo:
+- Modo oscuro por defecto.
+- Fondo negro/azul muy oscuro.
+- Cristal translúcido en paneles.
+- Bordes finos con baja opacidad.
+- Brillos sutiles azul/cian/verde.
+- Tipografía moderna, seria y técnica.
+- Animaciones suaves.
+- Sensación de sistema premium, potente y profesional.
+- Nada de estilo infantil, SaaS genérico o dashboard básico.
+
+Vista principal:
+- Header superior discreto.
+- Título o marca pequeña.
+- Centro visual dominado por:
+  1. Buscador de ciudad/país/dirección.
+  2. Selector de modo: "Ciudades" / "Países".
+  3. Globo terráqueo 3D debajo.
+- El globo debe girar automáticamente de forma lenta y elegante hasta que el usuario interactúe.
+- Al interactuar, debe detener o reducir la rotación automática.
+- Debe permitir seleccionar ubicaciones.
+- Debe mostrar marcadores o highlights.
+- Debe funcionar bien en desktop.
+- Responsive básico para tablet/móvil, pero prioridad desktop.
+
+Flujo visual:
+1. Usuario entra.
+2. Ve buscador y globo girando.
+3. Busca "Alicante, España" o selecciona en el globo.
+4. Aparece una tarjeta de ubicación seleccionada.
+5. Se habilita selector de sector.
+6. Sector por defecto: Hostelería.
+7. Botón: "Iniciar exploración".
+8. Al iniciar, aparece consola/progreso tipo operación geoespacial:
+   - Resolviendo zona.
+   - Consultando OpenStreetMap.
+   - Normalizando entidades.
+   - Deduplicando candidatos.
+   - Guardando resultados.
+   - Finalizado.
+9. Los negocios aparecen como puntos en el mapa/globo.
+10. Panel lateral muestra resultados y métricas.
+
+============================================================
+MODELO DE DATOS BASE EN CONVEX
+============================================================
+
+Diseñar el schema de Convex con al menos estas entidades:
+
+sectors:
+- name
+- slug
+- description
+- enabled
+- defaultCategories
+- createdAt
+- updatedAt
+
+locations:
+- label
+- type: city | country | address | custom_area
+- country
+- countryCode
+- region
+- city
+- lat
+- lng
+- boundingBox
+- source
+- createdAt
+- updatedAt
+
+searchJobs:
+- status: pending | running | completed | failed | cancelled
+- sectorId
+- locationId
+- requestedBy
+- sourceMode
+- totalFound
+- totalInserted
+- totalUpdated
+- totalDuplicates
+- progress
+- currentStep
+- errorMessage
+- startedAt
+- finishedAt
+- createdAt
+- updatedAt
+
+businesses:
+- canonicalName
+- normalizedName
+- sectorSlug
+- primaryCategory
+- rawCategories
+- address
+- city
+- region
+- country
+- countryCode
+- lat
+- lng
+- phone
+- website
+- email
+- openingHours
+- osmId
+- osmType
+- status
+- confidenceScore
+- sourceCount
+- firstSeenAt
+- lastSeenAt
+- createdAt
+- updatedAt
+
+businessSources:
+- businessId
+- sourceName
+- sourceExternalId
+- sourceUrl
+- rawName
+- rawAddress
+- rawPhone
+- rawWebsite
+- rawCategories
+- rawPayload
+- fetchedAt
+- createdAt
+
+jobLogs:
+- jobId
+- level: info | warning | error | debug
+- message
+- metadata
+- createdAt
+
+sourceRuns:
+- jobId
+- sourceName
+- status
+- startedAt
+- finishedAt
+- totalRaw
+- totalNormalized
+- totalErrors
+- errorMessage
+
+============================================================
+CATEGORÍAS INICIALES DE HOSTELERÍA PARA OSM
+============================================================
+
+El sector Hostelería debe buscar tipos de establecimientos con mesas o consumo presencial, orientado inicialmente a restaurantes, bares y cafeterías.
+
+Mapear desde OpenStreetMap etiquetas como:
+- amenity=restaurant
+- amenity=cafe
+- amenity=bar
+- amenity=pub
+- amenity=fast_food
+- amenity=food_court
+- amenity=ice_cream
+- tourism=hotel con restaurant si hay datos relacionados
+- shop=bakery solo si tiene consumo/cafetería cuando esté indicado
+- cuisine=* como metadato adicional
+
+No incluir de primeras:
+- supermercados
+- tiendas de alimentación puras
+- vending machines
+- gasolineras salvo que tengan restaurante explícito
+- alojamientos sin restaurante
+- negocios no relacionados con consumo presencial
+
+============================================================
+FASE 0 — PREPARACIÓN DEL MONOREPO
+============================================================
+
+Objetivo:
+Crear la estructura inicial del monorepo, tooling base y documentación.
+
+Tareas:
+1. Crear estructura:
+
+/
+  apps/
+    web/
+    api/
+  packages/
+    shared/
+  convex/
+  docker/
+  docs/
+  docker-compose.yml
+  .env.example
+  README.md
+
+2. Configurar workspace.
+3. Configurar TypeScript para frontend.
+4. Configurar Python/FastAPI en apps/api.
+5. Configurar Convex en carpeta convex.
+6. Crear README inicial:
+   - Qué es el proyecto.
+   - Cómo instalar.
+   - Cómo ejecutar local.
+   - Cómo desplegar en Coolify.
+   - Variables de entorno necesarias.
+7. Crear .env.example con variables:
+   - VITE_CONVEX_URL
+   - CONVEX_SELF_HOSTED_URL
+   - CONVEX_SELF_HOSTED_ADMIN_KEY
+   - API_BASE_URL
+   - OVERPASS_API_URL
+   - APP_ENV
+   - FRONTEND_PORT
+   - API_PORT
+8. Crear docker-compose.yml inicial con:
+   - web
+   - api
+   - convex backend o configuración preparada para Convex externo
+   - redes internas
+   - volúmenes persistentes
+9. Crear healthchecks básicos.
+10. Asegurar que el proyecto arranca localmente.
+
+Criterios de aceptación:
+- El monorepo arranca con un comando documentado.
+- Frontend muestra una página mínima.
+- Backend responde en /health.
+- Convex queda inicializado o documentado si se usa servicio externo.
+- docker-compose.yml no expone servicios internos innecesarios.
+- README explica cómo usarlo en Coolify.
+
+============================================================
+FASE 1 — DISEÑO BASE DEL FRONTEND
+============================================================
+
+Objetivo:
+Crear la interfaz principal oscura, premium y geoespacial.
+
+Tareas:
+1. Configurar TailwindCSS.
+2. Crear tema oscuro global.
+3. Crear layout principal:
+   - Header superior.
+   - Zona central de búsqueda.
+   - Contenedor del globo 3D.
+   - Panel lateral derecho ocultable.
+   - Footer técnico discreto o barra de estado.
+4. Crear componentes:
+   - AppShell
+   - LocationSearchBar
+   - GlobeViewport
+   - ModeToggle
+   - SectorSelector
+   - OperationPanel
+   - ResultsPanel
+   - BusinessCard
+   - MetricBadge
+   - StatusConsole
+5. Estética:
+   - Fondos oscuros.
+   - Gradientes suaves.
+   - Glassmorphism sobrio.
+   - Bordes finos.
+   - Animaciones con Framer Motion.
+6. La pantalla inicial debe tener:
+   - Buscador grande.
+   - Selector Ciudades/Países.
+   - Globo debajo.
+   - Sin demasiados menús.
+7. Crear datos mock para simular:
+   - ubicación seleccionada
+   - sector seleccionado
+   - progreso
+   - resultados
+
+Criterios de aceptación:
+- La app visualmente parece una herramienta avanzada.
+- Modo oscuro por defecto.
+- El buscador y el globo dominan la vista.
+- El diseño no parece un dashboard SaaS genérico.
+- Hay estados visuales para vacío, buscando, resultados y error.
+
+============================================================
+FASE 2 — GLOBO 3D INTERACTIVO
+============================================================
+
+Objetivo:
+Implementar el globo terráqueo 3D como elemento central de la experiencia.
+
+Tareas:
+1. Elegir librería adecuada entre Three.js/React Three Fiber/react-globe.gl/CesiumJS.
+2. Implementar GlobeViewport.
+3. El globo debe:
+   - Girar automáticamente de forma lenta.
+   - Detener o suavizar la rotación al interactuar.
+   - Permitir zoom y rotación manual.
+   - Mostrar atmósfera/brillo sutil.
+   - Tener estética oscura.
+   - Renderizar marcadores.
+4. Implementar dos modos:
+   - Modo Ciudades.
+   - Modo Países.
+5. En modo ciudades:
+   - Mostrar marcadores de ciudades principales mock inicialmente.
+   - Permitir click en marcador.
+6. En modo países:
+   - Permitir seleccionar país de forma aproximada o desde buscador.
+   - Resaltar selección.
+7. Crear evento onLocationSelected.
+8. Al seleccionar ubicación, actualizar el estado global.
+9. Mostrar tarjeta flotante con:
+   - nombre ubicación
+   - tipo
+   - país
+   - coordenadas aproximadas
+   - botón continuar
+
+Criterios de aceptación:
+- Globo gira automáticamente al cargar.
+- El usuario puede interactuar.
+- Seleccionar una ubicación cambia el estado.
+- El globo no bloquea la UI.
+- Buen rendimiento en desktop.
+
+============================================================
+FASE 3 — BUSCADOR DE UBICACIÓN
+============================================================
+
+Objetivo:
+Permitir buscar ciudad, país o dirección por texto con autocompletado.
+
+Tareas:
+1. Implementar LocationSearchBar.
+2. Usar inicialmente una fuente gratuita compatible con OSM, por ejemplo Nominatim, respetando límites y dejando el código preparado para cambiar proveedor.
+3. Buscar por texto:
+   - ciudad
+   - país
+   - dirección
+4. Mostrar sugerencias:
+   - nombre
+   - tipo
+   - país
+   - región
+5. Al seleccionar sugerencia:
+   - guardar ubicación
+   - centrar globo
+   - mostrar tarjeta de ubicación
+6. Normalizar respuesta a un modelo interno LocationCandidate:
+   - label
+   - type
+   - lat
+   - lng
+   - boundingBox
+   - country
+   - countryCode
+   - raw
+7. Añadir manejo de errores:
+   - sin resultados
+   - proveedor no disponible
+   - búsqueda demasiado corta
+8. Añadir debounce.
+9. Añadir loading state elegante.
+
+Criterios de aceptación:
+- Buscar "Alicante, España" devuelve candidatos.
+- Seleccionar un candidato actualiza el globo y la UI.
+- El sistema guarda bounding box si está disponible.
+- La UI no lanza peticiones en cada tecla sin control.
+
+============================================================
+FASE 4 — CONVEX SCHEMA Y DATOS BASE
+============================================================
+
+Objetivo:
+Definir el schema real en Convex y preparar queries/mutations.
+
+Tareas:
+1. Crear schema de Convex para:
+   - sectors
+   - locations
+   - searchJobs
+   - businesses
+   - businessSources
+   - jobLogs
+   - sourceRuns
+2. Crear índices adecuados:
+   - businesses por sectorSlug
+   - businesses por país/ciudad
+   - businesses por osmId/osmType
+   - searchJobs por status
+   - businessSources por sourceName/sourceExternalId
+3. Crear mutations:
+   - createLocation
+   - upsertSector
+   - createSearchJob
+   - updateSearchJobProgress
+   - completeSearchJob
+   - failSearchJob
+   - appendJobLog
+   - upsertBusiness
+   - addBusinessSource
+4. Crear queries:
+   - listSectors
+   - getLocation
+   - getSearchJob
+   - listJobLogs
+   - listBusinessesByJob/location/sector
+   - getBusinessDetail
+5. Crear seed inicial:
+   - sector Hostelería
+6. Documentar cómo desplegar funciones Convex.
+
+Criterios de aceptación:
+- El frontend puede leer sectores desde Convex.
+- Se puede crear un SearchJob.
+- Se pueden insertar negocios.
+- Los datos se actualizan en tiempo real en frontend.
+
+============================================================
+FASE 5 — BACKEND PYTHON FASTAPI
+============================================================
+
+Objetivo:
+Crear backend auxiliar para orquestar búsquedas geoespaciales y extracción desde OpenStreetMap.
+
+Tareas:
+1. Crear FastAPI app en apps/api.
+2. Endpoints:
+   - GET /health
+   - POST /jobs/search
+   - GET /jobs/{job_id}
+   - POST /jobs/{job_id}/cancel
+   - GET /sources/osm/test
+3. Crear módulos:
+   - config.py
+   - convex_client.py
+   - osm_client.py
+   - normalizers/
+   - deduplication/
+   - jobs/
+   - logging/
+4. Implementar cliente para Convex.
+5. Implementar cliente para Overpass API.
+6. Implementar validaciones con Pydantic:
+   - SearchRequest
+   - LocationInput
+   - SectorInput
+   - OSMRawPlace
+   - NormalizedBusiness
+7. Preparar arquitectura de jobs:
+   - Al principio puede ser síncrona con background task.
+   - Dejar preparado para Celery/RQ/Temporal en futuro.
+8. Añadir logs estructurados.
+9. Añadir timeouts, retries y control básico de errores.
+
+Criterios de aceptación:
+- Backend recibe una búsqueda.
+- Crea/actualiza job en Convex.
+- Puede consultar OSM.
+- Guarda logs del job.
+- Devuelve estado correcto.
+
+============================================================
+FASE 6 — CONECTOR OPENSTREETMAP / OVERPASS
+============================================================
+
+Objetivo:
+Obtener negocios de hostelería desde OpenStreetMap.
+
+Tareas:
+1. Crear OSMConnector.
+2. Generar consultas Overpass según:
+   - bounding box
+   - sector Hostelería
+   - categorías OSM definidas
+3. Obtener nodos, ways y relations.
+4. Extraer campos:
+   - name
+   - amenity
+   - cuisine
+   - phone/contact:phone
+   - website/contact:website
+   - email/contact:email
+   - opening_hours
+   - addr:street
+   - addr:housenumber
+   - addr:postcode
+   - addr:city
+   - lat/lon
+   - osm_id
+   - osm_type
+5. Convertir cada resultado a NormalizedBusiness.
+6. Guardar raw payload en businessSources.
+7. Manejar datos incompletos.
+8. Limitar zona máxima para evitar consultas enormes.
+9. Si la ubicación es demasiado grande:
+   - dividir bounding box en tiles.
+   - procesar por partes.
+   - actualizar progreso.
+10. Añadir rate limiting básico.
+11. Añadir reintentos razonables.
+12. Añadir logs por fase.
+
+Criterios de aceptación:
+- Buscar Alicante devuelve negocios reales de OSM.
+- Se guardan en Convex.
+- Se muestran en frontend.
+- No se rompe con negocios sin teléfono/web/dirección.
+- Se informa del progreso.
+
+============================================================
+FASE 7 — NORMALIZACIÓN Y DEDUPLICACIÓN
+============================================================
+
+Objetivo:
+Evitar duplicados y crear entidades canónicas.
+
+Tareas:
+1. Crear normalización de nombre:
+   - lowercase
+   - quitar acentos
+   - quitar símbolos irrelevantes
+   - normalizar espacios
+   - eliminar sufijos comunes si procede
+2. Crear normalización de teléfono:
+   - limpiar espacios
+   - quitar caracteres
+   - conservar prefijo
+3. Crear normalización de web:
+   - quitar trailing slash
+   - normalizar dominio
+4. Reglas de deduplicación inicial:
+   - mismo osmId + osmType = mismo negocio
+   - mismo teléfono + misma zona = mismo negocio
+   - misma web + misma zona = probable mismo negocio
+   - nombre muy similar + distancia menor a 50m = probable mismo negocio
+5. Implementar función calculateConfidenceScore.
+6. Guardar sourceCount.
+7. Si ya existe:
+   - actualizar business
+   - añadir businessSource
+   - actualizar lastSeenAt
+8. Si no existe:
+   - crear business
+   - añadir businessSource
+9. Registrar en job:
+   - totalFound
+   - totalInserted
+   - totalUpdated
+   - totalDuplicates
+
+Criterios de aceptación:
+- Relanzar la misma búsqueda no duplica todos los negocios.
+- Los negocios existentes se actualizan.
+- El job muestra métricas correctas.
+
+============================================================
+FASE 8 — FLUJO COMPLETO FRONTEND + BACKEND + CONVEX
+============================================================
+
+Objetivo:
+Conectar toda la experiencia real.
+
+Tareas:
+1. Usuario selecciona ubicación.
+2. Usuario selecciona sector Hostelería.
+3. Usuario pulsa "Iniciar exploración".
+4. Frontend llama al backend.
+5. Backend crea job.
+6. Backend consulta OSM.
+7. Backend guarda resultados en Convex.
+8. Frontend escucha cambios en Convex.
+9. La consola de progreso se actualiza en tiempo real.
+10. Los negocios aparecen en globo/mapa.
+11. El panel lateral lista resultados.
+12. Cada negocio abre ficha.
+13. Añadir estados:
+   - idle
+   - resolving location
+   - searching
+   - normalizing
+   - saving
+   - completed
+   - failed
+
+Criterios de aceptación:
+- Flujo real end-to-end funcionando.
+- No depende de mocks.
+- Se puede buscar una ciudad y ver negocios.
+- La UI da sensación de operación avanzada.
+- Los errores se muestran bien.
+
+============================================================
+FASE 9 — PANEL DE RESULTADOS Y FICHA DE NEGOCIO
+============================================================
+
+Objetivo:
+Crear visualización útil de los negocios obtenidos.
+
+Tareas:
+1. ResultsPanel con:
+   - total encontrados
+   - insertados
+   - actualizados
+   - duplicados
+   - fuente activa
+   - duración del job
+2. Tabla/lista con:
+   - nombre
+   - categoría
+   - ciudad
+   - teléfono
+   - web
+   - confianza
+   - fuente
+3. Filtros:
+   - con teléfono
+   - con web
+   - con email
+   - categoría
+   - confidenceScore mínimo
+4. Orden:
+   - nombre
+   - categoría
+   - confianza
+   - fecha
+5. BusinessDetail:
+   - nombre canónico
+   - dirección
+   - coordenadas
+   - teléfono
+   - web
+   - email
+   - horarios
+   - categorías OSM
+   - fuente original
+   - raw data colapsable
+6. Acción:
+   - copiar teléfono
+   - abrir web
+   - copiar ficha
+   - exportar selección más adelante
+
+Criterios de aceptación:
+- Los resultados son explorables.
+- Se pueden filtrar.
+- Cada negocio tiene ficha clara.
+- La app parece una herramienta de análisis, no una tabla simple.
+
+============================================================
+FASE 10 — MAPA/GLOBO CON RESULTADOS
+============================================================
+
+Objetivo:
+Visualizar negocios encontrados como inteligencia geoespacial.
+
+Tareas:
+1. Mostrar puntos en el globo/mapa para cada negocio.
+2. Diferenciar por categoría:
+   - restaurante
+   - cafetería
+   - bar
+   - pub
+   - fast_food
+   - otros
+3. Al pasar el ratón:
+   - tooltip con nombre y categoría.
+4. Al hacer click:
+   - abrir ficha en panel lateral.
+5. Al terminar búsqueda:
+   - enfocar zona con resultados.
+6. Añadir heat/cluster básico si hay muchos puntos.
+7. Si el globo 3D se complica para miles de puntos, implementar fallback a mapa 2D dentro de la misma experiencia visual.
+
+Criterios de aceptación:
+- Los resultados se ven espacialmente.
+- Click en punto abre ficha.
+- Buen rendimiento con cientos/miles de negocios.
+
+============================================================
+FASE 11 — EXPORTACIÓN Y TRAZABILIDAD
+============================================================
+
+Objetivo:
+Permitir usar los datos y saber de dónde viene cada campo.
+
+Tareas:
+1. Crear endpoint/exportación desde frontend o backend.
+2. Formatos:
+   - CSV
+   - JSON
+3. Exportar campos:
+   - canonicalName
+   - category
+   - address
+   - city
+   - country
+   - phone
+   - website
+   - email
+   - lat
+   - lng
+   - confidenceScore
+   - sourceName
+   - sourceExternalId
+4. Añadir vista de fuentes por negocio.
+5. Mostrar rawPayload colapsado.
+6. Añadir fecha de extracción.
+7. Añadir aviso interno:
+   - fuente: OpenStreetMap
+   - datos sujetos a licencia/atribución correspondiente
+8. Documentar atribución de OSM en README y UI.
+
+Criterios de aceptación:
+- Se puede exportar una búsqueda.
+- Cada negocio mantiene trazabilidad.
+- La fuente está clara.
+
+============================================================
+FASE 12 — PREPARACIÓN PARA COOLIFY
+============================================================
+
+Objetivo:
+Dejar el proyecto desplegable en Coolify mediante Docker Compose.
+
+Tareas:
+1. Revisar docker-compose.yml.
+2. Añadir labels o configuración necesaria si procede.
+3. Asegurar que servicios internos no se exponen innecesariamente.
+4. Añadir variables requeridas usando sintaxis compatible con Compose.
+5. Añadir volúmenes persistentes para Convex si se usa self-hosted.
+6. Añadir healthchecks.
+7. Añadir README sección Coolify:
+   - crear recurso
+   - seleccionar Docker Compose build pack
+   - configurar variables
+   - configurar dominios
+   - desplegar
+   - generar admin key de Convex si aplica
+8. Crear docker-compose.prod.yml si conviene.
+9. Añadir comandos de build y start.
+10. Validar que frontend habla con API y Convex usando variables de entorno.
+
+Criterios de aceptación:
+- El proyecto puede desplegarse desde Git en Coolify.
+- Los puertos están claros.
+- Las variables están documentadas.
+- Los datos de Convex persisten.
+- Hay instrucciones para primera puesta en marcha.
+
+============================================================
+FASE 13 — CALIDAD, TESTING Y ROBUSTEZ
+============================================================
+
+Objetivo:
+Hacer que la app sea fiable para iterar.
+
+Tareas:
+1. Añadir tests backend:
+   - normalización
+   - deduplicación
+   - parsing OSM
+   - cálculo de confidenceScore
+2. Añadir tests básicos frontend:
+   - componentes críticos
+   - estados de búsqueda
+3. Añadir linters:
+   - ESLint
+   - Prettier
+   - Ruff/Black para Python
+4. Añadir manejo de errores global.
+5. Añadir logs estructurados.
+6. Añadir límites:
+   - tamaño máximo de bounding box
+   - timeout Overpass
+   - número máximo de resultados inicial
+7. Añadir estados de recuperación:
+   - job fallido
+   - reintentar
+   - cancelar
+8. Añadir documentación técnica.
+
+Criterios de aceptación:
+- El backend tiene tests reales.
+- La app no se rompe con errores externos.
+- El código está formateado.
+- Hay límites para evitar búsquedas peligrosas.
+
+============================================================
+FASE 14 — ARQUITECTURA FUTURA MULTIFUENTE
+============================================================
+
+Objetivo:
+Preparar el sistema para dejar de depender solo de OpenStreetMap.
+
+Tareas:
+1. Crear interfaz SourceConnector:
+   - name
+   - searchBusinesses(location, sector)
+   - normalize(raw)
+   - getExternalId(raw)
+2. Adaptar OSMConnector a esa interfaz.
+3. Crear carpeta sources:
+   - osm/
+   - future_foursquare/
+   - future_yelp/
+   - future_directories/
+   - future_web/
+4. Crear source registry.
+5. Permitir elegir fuentes en backend aunque frontend solo use OSM por ahora.
+6. Preparar sourceRuns por fuente.
+7. Preparar deduplicación cross-source.
+8. Documentar cómo añadir una nueva fuente.
+
+Criterios de aceptación:
+- Añadir una nueva fuente en el futuro no exige reescribir el motor.
+- OSM es solo un conector más.
+- La trazabilidad por fuente está bien planteada.
+
+============================================================
+FASE 15 — PULIDO VISUAL FINAL
+============================================================
+
+Objetivo:
+Elevar la percepción de producto avanzado.
+
+Tareas:
+1. Añadir pantalla inicial impactante.
+2. Añadir microcopy técnico:
+   - "Sector intelligence scan"
+   - "Geospatial acquisition"
+   - "Entity normalization"
+   - "Source correlation"
+   - traducido o en inglés según estética elegida.
+3. Añadir animaciones suaves:
+   - entrada de paneles
+   - aparición de resultados
+   - progreso de job
+   - foco en ubicación
+4. Añadir métricas visuales:
+   - entidades detectadas
+   - fuentes consultadas
+   - confianza media
+   - cobertura estimada
+5. Añadir consola visual de operación.
+6. Añadir skeleton loaders.
+7. Revisar responsive.
+8. Revisar contraste y legibilidad.
+9. Eliminar cualquier aspecto genérico o amateur.
+
+Criterios de aceptación:
+- La app impresiona visualmente.
+- Parece una herramienta seria de inteligencia de datos.
+- La experiencia inicial es clara.
+- La búsqueda se entiende sin explicar demasiado.
+
+============================================================
+REGLAS DE IMPLEMENTACIÓN
+============================================================
+
+1. No hardcodear datos reales salvo seeds mínimos.
+2. No meter claves secretas en código.
+3. No usar Google Maps.
+4. No hacer scraping no autorizado.
+5. Respetar límites de APIs públicas.
+6. Mantener trazabilidad de fuente.
+7. Separar datos canónicos de datos raw.
+8. Diseñar pensando en sectores futuros.
+9. Diseñar pensando en países futuros.
+10. Priorizar arquitectura extensible.
+11. Documentar decisiones técnicas importantes.
+12. No meter funcionalidades comerciales todavía.
+13. No meter login todavía salvo que sea estrictamente necesario.
+14. No complicar con permisos multiusuario en esta primera versión.
+15. No sacrificar el diseño visual premium.
+
+============================================================
+RESULTADO FINAL ESPERADO DE ESTA PRIMERA VERSIÓN
+============================================================
+
+Al final de estas fases debe existir una aplicación desplegable en Coolify donde:
+
+1. El usuario entra en una interfaz oscura y avanzada.
+2. Ve un buscador y un globo 3D girando.
+3. Busca o selecciona una ciudad/país.
+4. Selecciona Hostelería.
+5. Lanza una exploración.
+6. El backend consulta OpenStreetMap.
+7. Los negocios se normalizan y deduplican.
+8. Los datos se guardan en Convex.
+9. El frontend muestra progreso en tiempo real.
+10. Los negocios aparecen en el globo/mapa.
+11. Se pueden revisar en panel lateral.
+12. Se puede abrir la ficha de cada negocio.
+13. Se puede exportar CSV/JSON.
+14. El sistema queda preparado para añadir nuevas fuentes.
+
+============================================================
+ORDEN DE TRABAJO RECOMENDADO PARA EL AGENTE
+============================================================
+
+Primero implementa:
+FASE 0
+FASE 1
+FASE 2
+
+Después valida visualmente.
+
+Luego implementa:
+FASE 3
+FASE 4
+FASE 5
+
+Después valida flujo técnico.
+
+Luego implementa:
+FASE 6
+FASE 7
+FASE 8
+
+Después valida búsqueda real con OpenStreetMap.
+
+Finalmente implementa:
+FASE 9
+FASE 10
+FASE 11
+FASE 12
+FASE 13
+FASE 14
+FASE 15
+
+En cada fase:
+- Explica qué vas a hacer.
+- Implementa.
+- Prueba.
+- Corrige errores.
+- Resume.
+- Deja instrucciones para continuar.

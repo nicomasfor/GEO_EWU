@@ -1,0 +1,49 @@
+services:
+  web:
+    build:
+      context: .
+      dockerfile: docker/web.Dockerfile
+      args:
+        VITE_CONVEX_URL: ${VITE_CONVEX_URL:-}
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://127.0.0.1:8000}
+    environment:
+      VITE_CONVEX_URL: ${VITE_CONVEX_URL:-}
+      VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:8000}
+    ports:
+      - "${FRONTEND_PORT:-5173}:80"
+    depends_on:
+      api:
+        condition: service_healthy
+    networks:
+      - geosector
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1/"]
+      interval: 20s
+      timeout: 5s
+      retries: 3
+
+  api:
+    build:
+      context: .
+      dockerfile: docker/api.Dockerfile
+    environment:
+      APP_ENV: ${APP_ENV:-local}
+      OVERPASS_API_URL: ${OVERPASS_API_URL:-https://overpass-api.de/api/interpreter}
+      OVERPASS_API_URLS: ${OVERPASS_API_URLS:-https://overpass-api.de/api/interpreter,https://overpass.kumi.systems/api/interpreter,https://overpass.openstreetmap.ru/api/interpreter}
+      OVERPASS_TILE_DELAY_SECONDS: ${OVERPASS_TILE_DELAY_SECONDS:-1.2}
+      OVERPASS_MAX_RETRIES: ${OVERPASS_MAX_RETRIES:-4}
+      CONVEX_URL: ${CONVEX_URL:-}
+      CONVEX_ADMIN_KEY: ${CONVEX_ADMIN_KEY:-}
+    ports:
+      - "${API_PORT:-8000}:8000"
+    networks:
+      - geosector
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=2).read()"]
+      interval: 20s
+      timeout: 5s
+      retries: 3
+
+networks:
+  geosector:
+    driver: bridge

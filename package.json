@@ -1,0 +1,22 @@
+{
+  "name": "geosector-intelligence",
+  "version": "0.1.0",
+  "private": true,
+  "description": "GeoSector Intelligence monorepo for geospatial business discovery.",
+  "packageManager": "pnpm@10.33.0",
+  "scripts": {
+    "dev": "pnpm --parallel --filter @geosector/web --filter @geosector/shared dev",
+    "dev:web": "pnpm --filter @geosector/web dev",
+    "build": "pnpm --filter @geosector/shared build && pnpm --filter @geosector/web build",
+    "typecheck": "pnpm --filter @geosector/shared typecheck && pnpm --filter @geosector/web typecheck",
+    "lint": "pnpm --filter @geosector/web lint",
+    "lint:api": "python -m ruff check apps/api/src apps/api/tests",
+    "test:api": "python -m pytest apps/api/tests",
+    "check": "pnpm typecheck && pnpm lint && pnpm lint:api && pnpm test:api"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.29",
+    "convex": "^1.39.1",
+    "typescript": "^5.8.3"
+  }
+}
